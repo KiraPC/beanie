@@ -13,7 +13,7 @@ from typing import (
     cast,
     Generic,
     Coroutine,
-    overload
+    overload,
 )
 
 from pydantic import BaseModel
@@ -47,6 +47,7 @@ if TYPE_CHECKING:
 
 FindQueryType = TypeVar("FindQueryType", bound="FindQuery")
 ResultQueryType = TypeVar("ResultQueryType")
+
 
 class FindQuery(Generic[ResultQueryType], UpdateMethods, SessionMethods):
     """
@@ -139,22 +140,10 @@ class FindQuery(Generic[ResultQueryType], UpdateMethods, SessionMethods):
             find_query=self.get_filter_query(),
         ).set_session(session=session)
 
-    @overload
     def project(
-        self: FindQueryType,
-        projection_model: None = None,
-    ) -> FindQueryType: ...
-
-    @overload
-    def project(
-        self: FindQueryType,
-        projection_model: Type[ProjectionType],
-    ) -> "FindQuery[ProjectionType]": ...
-
-    def project(
-        self: FindQueryType,
-        projection_model: Optional[Type[BaseModel]],
-    ) -> FindQueryType:
+        self,
+        projection_model=None,
+    ):
         """
         Apply projection parameter
 
@@ -386,6 +375,31 @@ class FindOne(FindQuery[ResultQueryType]):
     UpdateQueryType = UpdateOne
     DeleteQueryType = DeleteOne
 
+    @overload
+    def project(
+        self: "FindOne",
+        projection_model: None = None,
+    ) -> "FindOne[ResultQueryType]":
+        ...
+
+    @overload
+    def project(
+        self: "FindOne",
+        projection_model: Type[ProjectionType],
+    ) -> "FindOne[ProjectionType]":
+        ...
+
+    def project(
+        self: "FindOne",
+        projection_model: Optional[Type[ProjectionType]] = None,
+    ) -> Union["FindOne[ResultQueryType]", "FindOne[ProjectionType]"]:
+        """
+        Apply projection parameter
+        :param projection_model: Optional[Type[BaseModel]] - projection model
+        :return: self
+        """
+        return super().project(projection_model)
+
     def find_one(
         self,
         *args: Mapping[str, Any],
@@ -467,4 +481,4 @@ class FindOne(FindQuery[ResultQueryType]):
         )
         if document is None:
             return None
-        return self.projection_model.parse_obj(document)
+        return cast(ResultQueryType, self.projection_model.parse_obj(document))

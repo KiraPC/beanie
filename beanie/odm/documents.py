@@ -7,7 +7,7 @@ from typing import (
     Mapping,
     TypeVar,
     Any,
-    overload
+    overload,
 )
 
 from bson import ObjectId
@@ -42,7 +42,6 @@ from beanie.odm.queries.find import FindOne, FindMany
 from beanie.odm.queries.update import UpdateMany
 from beanie.odm.utils.collection import collection_factory
 from beanie.odm.utils.dump import get_dict
-from __future__ import annotations
 
 DocType = TypeVar("DocType", bound="Document")
 ProjectionType = TypeVar("ProjectionType", bound="BaseModel")
@@ -170,25 +169,29 @@ class Document(BaseModel, UpdateMethods):
     @classmethod
     def find_one(
         cls: Type[DocType],
-        *args,
+        *args: Union[Mapping[str, Any], Any],
         projection_model: None = None,
-    ) -> FindOne[DocType]: ...
+        session: Optional[ClientSession] = None,
+    ) -> FindOne[DocType]:
+        ...
 
     @overload
     @classmethod
     def find_one(
         cls: Type[DocType],
-        *args,
+        *args: Union[Mapping[str, Any], Any],
         projection_model: Type[ProjectionType],
-    ) -> FindOne[ProjectionType]: ...
+        session: Optional[ClientSession] = None,
+    ) -> FindOne[ProjectionType]:
+        ...
 
     @classmethod
     def find_one(
         cls: Type[DocType],
-        *args: Mapping[str, Any],
-        projection_model: Optional[ProjectionType[ProjectionType]] = None,
+        *args: Union[Mapping[str, Any], Any],
+        projection_model: Optional[Type[ProjectionType]] = None,
         session: Optional[ClientSession] = None,
-    ) -> FindOne[Union[DocType, ProjectionType]]:
+    ) -> Union[FindOne[DocType], FindOne[ProjectionType]]:
         """
         Find one document by criteria.
         Returns [FindOne](https://roman-right.github.io/beanie/api/queries/#findone) query object.
